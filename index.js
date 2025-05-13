@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.w3tuc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // console.log(uri);
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -17,7 +17,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -26,7 +26,26 @@ async function run() {
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
+
+    const postCollection = client.db("volunteer").collection("add_post");
+
+    app.post("/post", async (req, res) => {
+      const newPost = req.body;
+      if (
+        !newPost ||
+        typeof newPost !== "object" ||
+        !newPost.post_title ||
+        !newPost.description
+      ) {
+        return res.status(400).json({ error: "Invalid post data" });
+      }
+      const result = await postCollection.insertOne(newPost);
+      res.json(result);
+    });
+    
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -35,9 +54,9 @@ async function run() {
 run().catch(console.dir);
 
 app.get("/", (req, res) => {
-    res.send("Hello World, Server is Ready")
+  res.send("Hello World, Server is Ready");
 });
 
 app.listen(port, () => {
-    console.log(`Server is listening on port: ${port}`)
-})
+  console.log(`Server is listening on port: ${port}`);
+});
