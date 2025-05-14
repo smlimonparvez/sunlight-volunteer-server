@@ -90,22 +90,22 @@ async function run() {
     // update post
     app.put("/update-my-post/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const updatePost = req.body;
       const updateDoc = {
         $set: updatePost,
       };
       const result = await postCollection.updateOne(query, updateDoc);
       res.json(result);
-    })
+    });
 
     // delete my post
     app.delete("/delete-my-post/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await postCollection.deleteOne(query);
       res.json(result);
-    })
+    });
 
     // be a volunteer
     app.post("/be-volunteer", async (req, res) => {
@@ -137,15 +137,27 @@ async function run() {
           .status(200)
           .json({ success: true, message: "Volunteer request submitted" });
       } catch (error) {
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Server Error",
-            error: error.message,
-          });
+        res.status(500).json({
+          success: false,
+          message: "Server Error",
+          error: error.message,
+        });
       }
     });
+
+    // be a volunteer post by logged in user
+    app.get("/be-volunteer-post", async (req, res) => {
+      const userEmail = req.query.userEmail;
+      // console.log("organizer_email:", userEmail)
+      if (!userEmail) {
+        return res.status(400).send("User email is required");
+      }
+      const query = { organizer_email: userEmail };
+      const cursor = beVolunteerCollection.find(query);
+      const posts = await cursor.toArray();
+      res.json(posts);
+    });
+
 
   } finally {
     // Ensures that the client will close when you finish/error
