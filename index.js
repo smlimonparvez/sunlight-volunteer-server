@@ -87,6 +87,18 @@ async function run() {
       res.json(posts);
     });
 
+    // update post
+    app.put("/update-my-post/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const updatePost = req.body;
+      const updateDoc = {
+        $set: updatePost,
+      };
+      const result = await postCollection.updateOne(query, updateDoc);
+      res.json(result);
+    })
+
     // be a volunteer
     app.post("/be-volunteer", async (req, res) => {
       const request = req.body;
