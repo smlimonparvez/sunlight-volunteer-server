@@ -87,7 +87,45 @@ async function run() {
       res.json(posts);
     });
 
-   
+    // be a volunteer
+    app.post("/be-volunteer", async (req, res) => {
+      const request = req.body;
+      const postId = request.post_id;
+
+      try {
+        // Check if volunteers are still needed
+        const post = await postCollection.findOne({
+          _id: new ObjectId(postId),
+        });
+
+        if (!post || post.total_volunteer_need <= 0) {
+          return res
+            .status(400)
+            .json({ success: false, message: "No more volunteers needed" });
+        }
+
+        // Insert volunteer request
+        await beVolunteerCollection.insertOne(request);
+
+        // Decrement total volunteers needed
+        await postCollection.updateOne(
+          { _id: new ObjectId(postId) },
+          { $inc: { total_volunteer_need: -1 } }
+        );
+
+        res
+          .status(200)
+          .json({ success: true, message: "Volunteer request submitted" });
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            success: false,
+            message: "Server Error",
+            error: error.message,
+          });
+      }
+    });
 
   } finally {
     // Ensures that the client will close when you finish/error
