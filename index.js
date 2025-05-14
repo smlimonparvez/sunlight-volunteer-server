@@ -158,7 +158,13 @@ async function run() {
       res.json(posts);
     });
 
-
+    // delete be volunteer post
+    app.delete("/delete-be-volunteer-post/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await beVolunteerCollection.deleteOne(query);
+      res.json(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
