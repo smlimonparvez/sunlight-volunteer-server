@@ -5,11 +5,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middleware
-app.use(cors({
-  origin: '*', 
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
@@ -35,6 +31,9 @@ async function run() {
     );
 
     const postCollection = client.db("volunteer").collection("add_post");
+    const beVolunteerCollection = client
+      .db("volunteer")
+      .collection("be_volunteer");
 
     // add post
     app.post("/add-post", async (req, res) => {
@@ -47,6 +46,8 @@ async function run() {
       ) {
         return res.status(400).json({ error: "Invalid post data" });
       }
+      newPost.total_volunteer_need =
+        parseInt(newPost.total_volunteer_need) || 0;
       const result = await postCollection.insertOne(newPost);
       res.json(result);
     });
@@ -56,22 +57,37 @@ async function run() {
       const cursor = postCollection.find({});
       const posts = await cursor.toArray();
       res.json(posts);
-    })
+    });
 
     // get limited post by ascending order
     app.get("/limited-posts", async (req, res) => {
-      const cursor = postCollection.find({}).sort({deadline: 1}).limit(6);
+      const cursor = postCollection.find({}).sort({ deadline: 1 }).limit(6);
       const limitedPost = await cursor.toArray();
       res.json(limitedPost);
-    })
+    });
 
     // get post details
     app.get("/post-details/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const post = await postCollection.findOne(query);
       res.json(post);
-    })
+    });
+
+    // get post for logged in user
+    app.get("/my-posts", async (req, res) => {
+      const userEmail = req.query.userEmail;
+      // console.log("organizer_email:", userEmail)
+      if (!userEmail) {
+        return res.status(400).send("User email is required");
+      }
+      const query = { organizer_email: userEmail };
+      const cursor = postCollection.find(query);
+      const posts = await cursor.toArray();
+      res.json(posts);
+    });
+
+   
 
   } finally {
     // Ensures that the client will close when you finish/error
