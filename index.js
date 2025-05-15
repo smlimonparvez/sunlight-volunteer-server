@@ -47,7 +47,7 @@ async function run() {
         return res.status(400).json({ error: "Invalid post data" });
       }
       newPost.total_volunteer_need =
-        parseInt(newPost.total_volunteer_need) || 0;
+        Number(newPost.total_volunteer_need) || 0;
       const result = await postCollection.insertOne(newPost);
       res.json(result);
     });
@@ -92,6 +92,7 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updatePost = req.body;
+      delete updatePost._id; // Ensure _id is not included in the update
       const updateDoc = {
         $set: updatePost,
       };
@@ -110,7 +111,7 @@ async function run() {
     // be a volunteer
     app.post("/be-volunteer", async (req, res) => {
       const request = req.body;
-      const postId = request.post_id;
+      const postId = request._id;
 
       try {
         // Check if volunteers are still needed
@@ -146,7 +147,7 @@ async function run() {
     });
 
     // be a volunteer post by logged in user
-    app.get("/be-volunteer-post", async (req, res) => {
+    app.get("/be-volunteer-posts", async (req, res) => {
       const userEmail = req.query.userEmail;
       // console.log("organizer_email:", userEmail)
       if (!userEmail) {
