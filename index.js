@@ -8,26 +8,28 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 // middleware
-app.use(cors({
-  origin: ['http://localhost:5173'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
 const verifyToken = (req, res, next) => {
   const token = req?.cookies?.token;
-  if(!token) {
-    return res.status(401).send({message: 'unauthorized access'})
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
   }
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-    if(err) {
-       return res.status(401).send({message: 'unauthorized access'})
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
     }
     req.user = decoded;
     next();
-  })
-}
+  });
+};
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.w3tuc.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 // console.log(uri);
@@ -63,6 +65,16 @@ async function run() {
       });
       res
         .cookie("token", token, {
+          httpOnly: true,
+          secure: false,
+        })
+        .send({ success: true });
+    });
+
+    // logout
+    app.post("/logout", (req, res) => {
+      res
+        .clearCookie("token", {
           httpOnly: true,
           secure: false,
         })
@@ -108,13 +120,21 @@ async function run() {
     });
 
     // get post for logged in user
-    app.get("/my-posts", async (req, res) => {
+    app.get("/my-posts", verifyToken, async (req, res) => {
       const userEmail = req.query.userEmail;
       // console.log("organizer_email:", userEmail)
+
       if (!userEmail) {
         return res.status(400).send("User email is required");
       }
       const query = { organizer_email: userEmail };
+
+      // console.log(req.cookies?.token)
+      // token email !== query email
+      if (req.user.email !== req.query.userEmail) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+
       const cursor = postCollection.find(query);
       const posts = await cursor.toArray();
       res.json(posts);
