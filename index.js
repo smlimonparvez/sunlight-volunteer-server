@@ -88,7 +88,7 @@ async function run() {
     });
 
     // add post
-    app.post("/add-post", async (req, res) => {
+    app.post("/add-post", verifyToken, async (req, res) => {
       const newPost = req.body;
       if (
         !newPost ||
@@ -118,7 +118,7 @@ async function run() {
     });
 
     // get post details
-    app.get("/post-details/:id", async (req, res) => {
+    app.get("/post-details/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const post = await postCollection.findOne(query);
@@ -147,7 +147,7 @@ async function run() {
     });
 
     // update post
-    app.put("/update-my-post/:id", async (req, res) => {
+    app.put("/update-my-post/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updatePost = req.body;
@@ -168,7 +168,7 @@ async function run() {
     });
 
     // be a volunteer
-    app.post("/be-volunteer", async (req, res) => {
+    app.post("/be-volunteer", verifyToken, async (req, res) => {
       const request = req.body;
       const postId = request._id;
 
@@ -221,7 +221,7 @@ async function run() {
     // delete be volunteer post
     app.delete("/delete-be-volunteer-post/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };
       const result = await beVolunteerCollection.deleteOne(query);
       res.json(result);
     });
